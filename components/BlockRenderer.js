@@ -23,8 +23,55 @@ function Element({element,preview=false}){
   if(element.type==='text') return <div className={cls} style={style}>{element.content}</div>;
   if(element.type==='button') return <div className={`lc-button-wrap ${anim(s)}`} style={{textAlign:s.align||'center',marginTop:px(s.marginTop),marginBottom:px(s.marginBottom)}}><a className="lc-button" href={element.url||'#'} style={{background:s.backgroundColor||'#2563eb',color:s.color||'#fff',fontSize:px(s.fontSize),fontWeight:s.fontWeight||800,padding:`${Number(s.paddingTop||14)}px ${Number(s.paddingRight||24)}px ${Number(s.paddingBottom||14)}px ${Number(s.paddingLeft||24)}px`,borderRadius:px(s.borderRadius||12)}}>{element.text||'Button'}</a></div>;
   if(element.type==='image') return element.src?<div className={cls} style={{textAlign:s.align||'center',...box(s)}}><img src={element.src} alt={element.alt||''} style={{width:'100%',maxWidth:s.maxWidth?`${s.maxWidth}px`:'100%',borderRadius:px(s.borderRadius),display:'inline-block'}}/></div>:<div className="lc-placeholder">Add image URL</div>;
-  if(element.type==='video') {const yt=extractYouTubeId(element.videoUrl||'');return yt?<div className={cls} style={{maxWidth:s.maxWidth?`${s.maxWidth}px`:'900px',marginLeft:'auto',marginRight:'auto',...box(s)}}><iframe className="yt" style={{borderRadius:px(s.borderRadius)}} src={`https://www.youtube.com/embed/${yt}?rel=0`} allowFullScreen title="Video"/></div>:<div className="lc-placeholder">Add YouTube URL</div>}
-  if(element.type==='divider') return <div className={cls} style={box(s)}><hr style={{border:0,borderTop:`1px solid ${s.color||'#e4e7ec'}`}}/></div>;
+if (element.type === 'video') {
+  const yt = extractYouTubeId(element.videoUrl || '');
+
+  if (!yt) {
+    return <div className="lc-placeholder">Add YouTube URL</div>;
+  }
+
+  const autoplay = s.autoplay ? 1 : 0;
+  const muted = s.muted !== false ? 1 : 0;
+  const loop = s.loop ? 1 : 0;
+  const controls = s.showControls !== false ? 1 : 0;
+
+  const params = new URLSearchParams({
+    autoplay: String(autoplay),
+    mute: String(muted),
+    loop: String(loop),
+    controls: String(controls),
+    playsinline: '1',
+    rel: '0',
+    enablejsapi: '1'
+  });
+
+  if (loop) {
+    params.set('playlist', yt);
+  }
+
+  return (
+    <div
+      className={cls}
+      style={{
+        maxWidth: s.maxWidth ? `${s.maxWidth}px` : '900px',
+        marginLeft: 'auto',
+        marginRight: 'auto',
+        ...box(s)
+      }}
+    >
+      <iframe
+        className="yt"
+        style={{
+          borderRadius: px(s.borderRadius)
+        }}
+        src={`https://www.youtube.com/embed/${yt}?${params.toString()}`}
+        allow="autoplay; encrypted-media; picture-in-picture"
+        allowFullScreen
+        title="Video"
+      />
+    </div>
+  );
+}  if(element.type==='divider') return <div className={cls} style={box(s)}><hr style={{border:0,borderTop:`1px solid ${s.color||'#e4e7ec'}`}}/></div>;
   if(element.type==='spacer') return <div className="lc-spacer" style={{height:px(element.height||40)}}/>;
   if(element.type==='form') return <form action="/api/form-submit" method="post" className={cls} style={{display:'grid',gap:10,...box(s)}}><input type="hidden" name="_form_name" value={element.formName||'Lead Form'}/><input type="hidden" name="_success_message" value={element.successMessage||'Thank you'}/>{(element.fields||[]).map((f,i)=><div key={i}><label style={{display:'block',fontSize:13,fontWeight:700,marginBottom:4}}>{f.label}</label>{f.type==='textarea'?<textarea name={f.name} required={!!f.required} style={{width:'100%',padding:10}}/>:<input type={f.type||'text'} name={f.name} required={!!f.required} style={{width:'100%',padding:10}}/>}</div>)}<button type="submit" style={{padding:'12px 16px',background:'#2563eb',color:'#fff',border:0,borderRadius:8}}>{element.submitText||'Submit'}</button></form>;
   if(element.type==='html') return <CustomCodeFrame html={element.html||''} css={element.css||''} js={element.js||''} height={element.height||300} title="Custom code"/>;
